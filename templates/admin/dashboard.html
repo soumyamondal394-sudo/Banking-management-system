@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Control Center | Apex Global Bank{% endblock %}
+{% block page_title %}Administrative Control Center{% endblock %}
+{% block page_subtitle %}Executive Banking Intelligence, Customer Management & Real-Time Audit{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+  <!-- Top Stat Cards -->
+  <div class="col-sm-6 col-xl-4">
+    <div class="stat-card" style="border-left: 4px solid var(--blue-accent);">
+      <div class="stat-icon-wrapper icon-navy">
+        <i class="fa-solid fa-vault"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Total Bank Reserves / Balance</div>
+        <div class="stat-value text-primary">${{ "{:,.2f}".format(total_bank_balance) }}</div>
+        <div class="stat-sub text-muted">Across {{ total_accounts }} accounts</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-4">
+    <div class="stat-card" style="border-left: 4px solid var(--success);">
+      <div class="stat-icon-wrapper icon-green">
+        <i class="fa-solid fa-circle-down"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Total Deposits (Inflows)</div>
+        <div class="stat-value text-success">${{ "{:,.2f}".format(total_deposits) }}</div>
+        <div class="stat-sub text-success"><i class="fa-solid fa-arrow-trend-up me-1"></i> Cumulative Deposits</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-4">
+    <div class="stat-card" style="border-left: 4px solid var(--danger);">
+      <div class="stat-icon-wrapper icon-orange">
+        <i class="fa-solid fa-circle-up"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Total Withdrawals (Outflows)</div>
+        <div class="stat-value text-danger">${{ "{:,.2f}".format(total_withdrawals) }}</div>
+        <div class="stat-sub text-muted">Transfers and ATM debits</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-4">
+    <div class="stat-card">
+      <div class="stat-icon-wrapper icon-purple">
+        <i class="fa-solid fa-users"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Registered Customers</div>
+        <div class="stat-value text-dark">{{ total_customers }}</div>
+        <div class="stat-sub text-primary"><a href="{{ url_for('admin.customers') }}" class="text-decoration-none">View Customer Directory &rarr;</a></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-4">
+    <div class="stat-card">
+      <div class="stat-icon-wrapper icon-blue">
+        <i class="fa-solid fa-credit-card"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Total Bank Accounts</div>
+        <div class="stat-value text-dark">{{ total_accounts }}</div>
+        <div class="stat-sub text-muted">{{ active_accounts }} Active &bull; {{ suspended_accounts }} Suspended</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-4">
+    <div class="stat-card">
+      <div class="stat-icon-wrapper icon-green">
+        <i class="fa-solid fa-bolt"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Today's Activity</div>
+        <div class="stat-value text-info">{{ today_txns_count }}</div>
+        <div class="stat-sub text-muted">Transactions logged today</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CHARTS SECTION -->
+<div class="row g-4 mb-4">
+  <!-- Cashflow Curve -->
+  <div class="col-lg-8">
+    <div class="bank-card h-100">
+      <div class="bank-card-header">
+        <h3 class="bank-card-title">
+          <i class="fa-solid fa-chart-line text-primary"></i> Bank Cashflow & Liquidity Volume
+        </h3>
+        <span class="text-muted small">Deposits vs Withdrawals (Past 6 Months)</span>
+      </div>
+      <div class="bank-card-body">
+        <div style="height: 280px; position: relative;">
+          <canvas id="transactionChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Account Type Distribution Doughnut -->
+  <div class="col-lg-4">
+    <div class="bank-card h-100">
+      <div class="bank-card-header">
+        <h3 class="bank-card-title">
+          <i class="fa-solid fa-chart-pie text-primary"></i> Account Distribution
+        </h3>
+      </div>
+      <div class="bank-card-body d-flex flex-column align-items-center justify-content-center">
+        <div style="height: 210px; width: 100%; position: relative;">
+          <canvas id="accountsDoughnutChart"></canvas>
+        </div>
+        <div class="d-flex justify-content-around w-100 mt-3 pt-3 border-top text-center">
+          <div>
+            <span class="d-block small text-muted">Savings</span>
+            <span class="fw-bold text-primary fs-5">{{ savings_count }}</span>
+          </div>
+          <div>
+            <span class="d-block small text-muted">Current</span>
+            <span class="fw-bold text-info fs-5">{{ current_count }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK CUSTOMER SEARCH & RECENT LEDGER -->
+<div class="row g-4">
+  <!-- Recent Customers -->
+  <div class="col-lg-4">
+    <div class="bank-card h-100">
+      <div class="bank-card-header">
+        <h3 class="bank-card-title">
+          <i class="fa-solid fa-user-plus text-primary"></i> Recent Customers
+        </h3>
+        <a href="{{ url_for('admin.customers') }}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <div class="bank-card-body p-0">
+        <div class="list-group list-group-flush">
+          {% for cust in recent_customers %}
+          <a href="{{ url_for('admin.customer_detail', user_id=cust.id) }}" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between p-3">
+            <div class="d-flex align-items-center gap-3">
+              <div class="rounded-circle bg-primary-subtle text-primary fw-bold d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                {{ cust.full_name[0] }}
+              </div>
+              <div>
+                <div class="fw-bold text-dark mb-0">{{ cust.full_name }}</div>
+                <small class="text-muted">{{ cust.email }}</small>
+              </div>
+            </div>
+            <span class="badge {% if cust.is_active %}bg-success-subtle text-success{% else %}bg-danger-subtle text-danger{% endif %} rounded-pill">
+              {{ 'Active' if cust.is_active else 'Deactivated' }}
+            </span>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Transaction Ledger -->
+  <div class="col-lg-8">
+    <div class="bank-card h-100">
+      <div class="bank-card-header">
+        <h3 class="bank-card-title">
+          <i class="fa-solid fa-list-check text-primary"></i> Master Transaction Log
+        </h3>
+        <a href="{{ url_for('admin.transactions') }}" class="btn btn-sm btn-outline-primary">Full Ledger</a>
+      </div>
+      <div class="bank-card-body p-0">
+        <div class="bank-table-responsive">
+          <table class="bank-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Ref ID</th>
+                <th>Customer / Account</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for txn in recent_transactions %}
+              <tr>
+                <td class="text-muted small">{{ txn.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td class="font-monospace small text-primary">{{ txn.reference_id }}</td>
+                <td>
+                  <div class="fw-bold small">{{ txn.account.user.full_name }}</div>
+                  <div class="text-muted small font-monospace">#{{ txn.account.account_number }}</div>
+                </td>
+                <td>
+                  <span class="badge-pill badge-{{ txn.badge_color }}-soft">
+                    {{ txn.transaction_type.replace('_', ' ').title() }}
+                  </span>
+                </td>
+                <td>
+                  {% if txn.is_credit %}
+                    <span class="fw-bold text-success">+${{ "{:,.2f}".format(txn.amount) }}</span>
+                  {% else %}
+                    <span class="fw-bold text-danger">-${{ "{:,.2f}".format(txn.amount) }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
+                    {{ txn.status }}
+                  </span>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.chartDataLabels = {{ chart_labels|tojson }};
+  window.chartDataDeposits = {{ chart_deposits|tojson }};
+  window.chartDataWithdrawals = {{ chart_withdrawals|tojson }};
+
+  // Render accounts doughnut chart
+  document.addEventListener('DOMContentLoaded', function() {
+    const doughnutCanvas = document.getElementById('accountsDoughnutChart');
+    if (doughnutCanvas) {
+      new Chart(doughnutCanvas, {
+        type: 'doughnut',
+        data: {
+          labels: ['Savings Accounts', 'Current Accounts'],
+          datasets: [{
+            data: [{{ savings_count }}, {{ current_count }}],
+            backgroundColor: ['#2563eb', '#38bdf8'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          },
+          cutout: '70%'
+        }
+      });
+    }
+  });
+</script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
+

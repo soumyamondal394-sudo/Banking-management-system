@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Money Transfer | Apex Global Bank{% endblock %}
+{% block page_title %}Transfer Money{% endblock %}
+{% block page_subtitle %}Instant electronic fund transfer to any Apex Bank account holder{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8 col-xl-7">
+    <div class="bank-card">
+      <div class="bank-card-header">
+        <h3 class="bank-card-title">
+          <i class="fa-solid fa-arrow-right-arrow-left text-info"></i> Inter-Account Transfer
+        </h3>
+        <span class="badge bg-info-subtle text-info border border-info-subtle">
+          Real-Time Settlement
+        </span>
+      </div>
+
+      <div class="bank-card-body p-4">
+        <form method="POST" action="{{ url_for('customer.transfer') }}" id="transferForm">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <!-- Step 1: Sender Account -->
+          <div class="mb-4">
+            <label class="form-label" for="senderAccountSelect">1. Select Source Account <span class="text-danger">*</span></label>
+            <select class="form-select form-select-lg" id="senderAccountSelect" name="sender_account_id" required>
+              {% for acc in accounts %}
+                <option value="{{ acc.id }}" data-balance="{{ acc.balance }}">
+                  {{ acc.account_type }} Account - #{{ acc.formatted_account_number }} (Available: ${{ "{:,.2f}".format(acc.balance) }})
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Step 2: Recipient Account with Live Lookup -->
+          <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+              <label class="form-label" for="receiverAccountNumber">2. Recipient Account Number <span class="text-danger">*</span></label>
+              <small class="text-muted">e.g. 1009876543 (Jane Smith) or 1005544332</small>
+            </div>
+            <div class="input-group input-group-lg">
+              <span class="input-group-text"><i class="fa-solid fa-user-check text-primary"></i></span>
+              <input type="text" class="form-control font-monospace fw-bold" id="receiverAccountNumber" name="receiver_account_number" placeholder="Enter 10-digit account number" required autocomplete="off">
+            </div>
+            <!-- Live Verification Container -->
+            <div id="recipientFeedback" class="mt-2"></div>
+          </div>
+
+          <!-- Step 3: Transfer Amount -->
+          <div class="mb-4">
+            <label class="form-label" for="transferAmount">3. Transfer Amount ($) <span class="text-danger">*</span></label>
+            <div class="input-group input-group-lg">
+              <span class="input-group-text bg-light fw-bold text-primary">$</span>
+              <input type="number" step="0.01" min="1.00" max="50000.00" class="form-control fw-bold fs-4 text-dark" id="transferAmount" name="amount" placeholder="0.00" required>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-1">
+              <small class="text-muted">Daily Limit: $50,000.00 | Fee: $0.00 (Free)</small>
+              <small class="fw-semibold">Remaining Balance: <span id="balancePreview">$0.00</span></small>
+            </div>
+          </div>
+
+          <!-- Step 4: Transfer Note -->
+          <div class="mb-4">
+            <label class="form-label" for="description">4. Transfer Note / Purpose</label>
+            <input type="text" class="form-control" id="description" name="description" placeholder="e.g. Rent share, Consulting fee, Family support" required>
+          </div>
+
+          <!-- Transfer Guarantee Banner -->
+          <div class="p-3 mb-4 rounded-3 bg-light border d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-primary text-white p-2">
+              <i class="fa-solid fa-lock fs-5"></i>
+            </div>
+            <div class="small text-muted">
+              Atomic Transaction Guarantee: Both source debit and destination credit are verified and committed in a single fail-safe database transaction.
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-bank-primary w-100 py-3 fw-bold fs-5" id="transferSubmitBtn">
+            <i class="fa-solid fa-paper-plane me-2"></i> Review & Execute Transfer
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/transfer.js') }}"></script>
+{% endblock %}
+

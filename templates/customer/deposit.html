@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Deposit Money | Apex Global Bank{% endblock %}
+{% block page_title %}Deposit Funds{% endblock %}
+{% block page_subtitle %}Add funds to your Apex Bank savings or checking account{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8 col-xl-7">
+    <div class="bank-card">
+      <div class="bank-card-header">
+        <h3 class="bank-card-title">
+          <i class="fa-solid fa-circle-down text-success"></i> Cash / Wire Deposit
+        </h3>
+        <span class="badge bg-success-subtle text-success border border-success-subtle">
+          Instant Settlement
+        </span>
+      </div>
+
+      <div class="bank-card-body p-4">
+        <form method="POST" action="{{ url_for('customer.deposit') }}" id="depositForm">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <!-- Select Target Account -->
+          <div class="mb-4">
+            <label class="form-label" for="account_id">Select Destination Account <span class="text-danger">*</span></label>
+            <select class="form-select form-select-lg" id="account_id" name="account_id" required>
+              {% for acc in accounts %}
+                <option value="{{ acc.id }}" data-balance="{{ acc.balance }}">
+                  {{ acc.account_type }} Account - #{{ acc.formatted_account_number }} (Available: ${{ "{:,.2f}".format(acc.balance) }})
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Quick Preset Amounts -->
+          <div class="mb-3">
+            <label class="form-label d-block text-muted small">Quick Amount Presets</label>
+            <div class="d-flex flex-wrap gap-2">
+              <button type="button" class="btn btn-outline-primary btn-sm preset-btn" onclick="setDepositAmount(50)">+$50</button>
+              <button type="button" class="btn btn-outline-primary btn-sm preset-btn" onclick="setDepositAmount(100)">+$100</button>
+              <button type="button" class="btn btn-outline-primary btn-sm preset-btn" onclick="setDepositAmount(250)">+$250</button>
+              <button type="button" class="btn btn-outline-primary btn-sm preset-btn" onclick="setDepositAmount(500)">+$500</button>
+              <button type="button" class="btn btn-outline-primary btn-sm preset-btn" onclick="setDepositAmount(1000)">+$1,000</button>
+              <button type="button" class="btn btn-outline-primary btn-sm preset-btn" onclick="setDepositAmount(5000)">+$5,000</button>
+            </div>
+          </div>
+
+          <!-- Deposit Amount Input -->
+          <div class="mb-4">
+            <label class="form-label" for="amount">Deposit Amount ($) <span class="text-danger">*</span></label>
+            <div class="input-group input-group-lg">
+              <span class="input-group-text bg-light fw-bold text-success">$</span>
+              <input type="number" step="0.01" min="1.00" max="250000.00" class="form-control fw-bold fs-4 text-dark" id="amount" name="amount" placeholder="0.00" required>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-1">
+              <small class="text-muted">Min: $1.00 | Max: $250,000.00</small>
+              <small class="text-success fw-semibold" id="newBalancePreview"></small>
+            </div>
+          </div>
+
+          <!-- Description / Memo -->
+          <div class="mb-4">
+            <label class="form-label" for="description">Transaction Memo / Description (Optional)</label>
+            <input type="text" class="form-control" id="description" name="description" placeholder="e.g. Salary, Client payment, Personal savings">
+          </div>
+
+          <!-- Deposit Confirmation Info Box -->
+          <div class="p-3 mb-4 rounded-3 bg-light border d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-success text-white p-2">
+              <i class="fa-solid fa-shield-halved fs-5"></i>
+            </div>
+            <div class="small text-muted">
+              Funds will be immediately credited to your account and recorded in your permanent transaction ledger with an official audit reference.
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-bank-primary w-100 py-3 fw-bold fs-5">
+            <i class="fa-solid fa-circle-check me-2"></i> Confirm & Execute Deposit
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function setDepositAmount(amt) {
+  document.getElementById('amount').value = amt.toFixed(2);
+  updateDepositPreview();
+}
+
+const amountInput = document.getElementById('amount');
+const accountSelect = document.getElementById('account_id');
+const previewEl = document.getElementById('newBalancePreview');
+
+function updateDepositPreview() {
+  const selectedOption = accountSelect.options[accountSelect.selectedIndex];
+  if (!selectedOption) return;
+  const currentBalance = parseFloat(selectedOption.getAttribute('data-balance') || 0);
+  const depAmt = parseFloat(amountInput.value || 0);
+
+  if (!isNaN(depAmt) && depAmt > 0) {
+    const newBal = currentBalance + depAmt;
+    previewEl.textContent = `New balance will be: $${newBal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  } else {
+    previewEl.textContent = '';
+  }
+}
+
+amountInput.addEventListener('input', updateDepositPreview);
+accountSelect.addEventListener('change', updateDepositPreview);
+</script>
+{% endblock %}
+

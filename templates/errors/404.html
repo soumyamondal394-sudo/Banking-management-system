@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found (404) | Apex Global Bank{% endblock %}
+{% block page_title %}Page Not Found{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+  <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary p-4 mb-3" style="width: 100px; height: 100px;">
+    <i class="fa-solid fa-magnifying-glass-location fs-1"></i>
+  </div>
+  <h2 class="fw-bold text-dark mb-2">404 - Resource Not Found</h2>
+  <p class="text-muted max-w-md mx-auto mb-4" style="max-width: 480px;">
+    The page, account record, or resource you were looking for does not exist or may have been relocated.
+  </p>
+  <a href="{{ url_for('customer.dashboard') }}" class="btn btn-bank-primary">
+    <i class="fa-solid fa-house me-1"></i> Return to Safety
+  </a>
+</div>
+{% endblock %}
+

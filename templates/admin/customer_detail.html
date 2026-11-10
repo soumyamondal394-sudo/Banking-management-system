@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Customer 360: {{ customer.full_name }} | Admin{% endblock %}
+{% block page_title %}Customer 360 Profile{% endblock %}
+{% block page_subtitle %}In-depth view of accounts, activity, and access privileges for {{ customer.full_name }}{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  <a href="{{ url_for('admin.customers') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="fa-solid fa-arrow-left me-1"></i> Back to Customer Directory
+  </a>
+</div>
+
+<div class="row g-4 mb-4">
+  <!-- Customer Overview Card -->
+  <div class="col-lg-4">
+    <div class="bank-card h-100">
+      <div class="bank-card-header">
+        <h3 class="bank-card-title">
+          <i class="fa-regular fa-user text-primary"></i> Profile Information
+        </h3>
+        <span class="badge {% if customer.is_active %}bg-success-subtle text-success border border-success-subtle{% else %}bg-danger-subtle text-danger border border-danger-subtle{% endif %}">
+          {{ 'Active' if customer.is_active else 'Deactivated' }}
+        </span>
+      </div>
+
+      <div class="bank-card-body p-4">
+        <div class="text-center mb-4">
+          <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-2" style="width: 72px; height: 72px; font-size: 1.8rem; font-weight: 700;">
+            {{ customer.full_name[0] }}
+          </div>
+          <h4 class="fw-bold text-dark mb-0">{{ customer.full_name }}</h4>
+          <span class="text-muted small">@{{ customer.username }}</span>
+        </div>
+
+        <div class="border-top pt-3">
+          <div class="d-flex justify-content-between py-2 border-bottom small">
+            <span class="text-muted">Email:</span>
+            <span class="fw-semibold text-dark">{{ customer.email }}</span>
+          </div>
+          <div class="d-flex justify-content-between py-2 border-bottom small">
+            <span class="text-muted">Phone:</span>
+            <span class="fw-semibold text-dark">{{ customer.phone or 'Not set' }}</span>
+          </div>
+          <div class="d-flex justify-content-between py-2 border-bottom small">
+            <span class="text-muted">Address:</span>
+            <span class="fw-semibold text-dark">{{ customer.address or 'Not set' }}</span>
+          </div>
+          <div class="d-flex justify-content-between py-2 border-bottom small">
+            <span class="text-muted">Total Net Liquidity:</span>
+            <span class="fw-bold text-primary fs-6">${{ "{:,.2f}".format(total_balance) }}</span>
+          </div>
+          <div class="d-flex justify-content-between py-2 small">
+            <span class="text-muted">Joined Date:</span>
+            <span class="text-dark">{{ customer.created_at.strftime('%b %d, %Y') }}</span>
+          </div>
+        </div>
+
+        <div class="mt-4 pt-3 border-top">
+          <form method="POST" action="{{ url_for('admin.toggle_customer_status', user_id=customer.id) }}" onsubmit="return confirm('Confirm toggle status for {{ customer.full_name }}?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% if customer.is_active %}
+            <button type="submit" class="btn btn-outline-danger w-100">
+              <i class="fa-solid fa-ban me-1"></i> Deactivate Customer Account
+            </button>
+            {% else %}
+            <button type="submit" class="btn btn-outline-success w-100">
+              <i class="fa-solid fa-check me-1"></i> Reactivate Customer Account
+            </button>
+            {% endif %}
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Accounts & Status Controls -->
+  <div class="col-lg-8">
+    <div class="bank-card mb-4">
+      <div class="bank-card-header">
+        <h3 class="bank-card-title">
+          <i class="fa-solid fa-vault text-primary"></i> Registered Bank Accounts
+        </h3>
+        <span class="badge bg-secondary-subtle text-secondary">{{ accounts|length }} Account(s)</span>
+      </div>
+      <div class="bank-card-body p-0">
+        <div class="bank-table-responsive">
+          <table class="bank-table">
+            <thead>
+              <tr>
+                <th>Account Number</th>
+                <th>Type</th>
+                <th>Balance</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for acc in accounts %}
+              <tr>
+                <td>
+                  <span class="font-monospace fw-bold text-dark">#{{ acc.formatted_account_number }}</span>
+                </td>
+                <td>{{ acc.account_type }}</td>
+                <td class="fw-bold text-primary">${{ "{:,.2f}".format(acc.balance) }}</td>
+                <td>
+                  <span class="badge {% if acc.status == 'Active' %}bg-success-subtle text-success border border-success-subtle{% elif acc.status == 'Suspended' %}bg-danger-subtle text-danger border border-danger-subtle{% else %}bg-secondary-subtle text-secondary{% endif %} rounded-pill">
+                    {{ acc.status }}
+                  </span>
+                </td>
+                <td>
+                  <!-- Toggle status form -->
+                  <form method="POST" action="{{ url_for('admin.toggle_account_status', account_id=acc.id) }}" class="d-inline-flex gap-1">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    {% if acc.status == 'Active' %}
+                      <input type="hidden" name="new_status" value="Suspended">
+                      <button type="submit" class="btn btn-sm btn-outline-danger" title="Suspend Account">
+                        <i class="fa-solid fa-snowflake me-1"></i> Freeze
+                      </button>
+                    {% else %}
+                      <input type="hidden" name="new_status" value="Active">
+                      <button type="submit" class="btn btn-sm btn-outline-success" title="Activate Account">
+                        <i class="fa-solid fa-check me-1"></i> Activate
+                      </button>
+                    {% endif %}
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="bank-card">
+      <div class="bank-card-header">
+        <h3 class="bank-card-title">
+          <i class="fa-solid fa-clock-rotate-left text-primary"></i> Recent Transactions
+        </h3>
+        <span class="text-muted small">Latest 20 entries</span>
+      </div>
+      <div class="bank-card-body p-0">
+        <div class="bank-table-responsive">
+          <table class="bank-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Ref ID</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Balance After</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if transactions %}
+                {% for txn in transactions %}
+                <tr>
+                  <td class="text-muted small">{{ txn.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                  <td class="font-monospace small text-primary">{{ txn.reference_id }}</td>
+                  <td>
+                    <span class="badge-pill badge-{{ txn.badge_color }}-soft">
+                      {{ txn.transaction_type.replace('_', ' ').title() }}
+                    </span>
+                  </td>
+                  <td>
+                    {% if txn.is_credit %}
+                      <span class="fw-bold text-success">+${{ "{:,.2f}".format(txn.amount) }}</span>
+                    {% else %}
+                      <span class="fw-bold text-danger">-${{ "{:,.2f}".format(txn.amount) }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="fw-semibold">${{ "{:,.2f}".format(txn.balance_after) }}</td>
+                  <td>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
+                      {{ txn.status }}
+                    </span>
+                  </td>
+                </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="6" class="text-center py-4 text-muted">No transactions found for this customer.</td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

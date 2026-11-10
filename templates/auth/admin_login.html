@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Administrator Portal | Apex Global Bank{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper" style="background: linear-gradient(135deg, #071326 0%, #0f2b5c 100%);">
+  <div class="container d-flex align-items-center justify-content-center min-vh-100 py-5">
+    <div class="card border-0 shadow-lg" style="width: 100%; max-width: 450px; background: #ffffff; border-radius: 18px; overflow: hidden;">
+      <!-- Header Banner -->
+      <div class="p-4 text-center text-white" style="background: linear-gradient(135deg, #091730 0%, #16366f 100%);">
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-white bg-opacity-10 p-3 mb-2">
+          <i class="fa-solid fa-shield-halved fs-2 text-warning"></i>
+        </div>
+        <h4 class="fw-bold mb-1">Administrative Gateway</h4>
+        <span class="badge bg-warning text-dark px-3 py-1 rounded-pill fw-bold">RESTRICTED ACCESS</span>
+      </div>
+
+      <div class="card-body p-4 p-md-5">
+        <div class="alert alert-secondary d-flex align-items-center small py-2 mb-4">
+          <i class="fa-solid fa-circle-info me-2 text-primary"></i>
+          <div>All admin access attempts are logged and monitored under audit compliance.</div>
+        </div>
+
+        <form method="POST" action="{{ url_for('auth.admin_login') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label class="form-label" for="username">Admin Username</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fa-solid fa-user-tie"></i></span>
+              <input type="text" class="form-control" id="username" name="username" value="admin" required autofocus>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+              <label class="form-label" for="password">Admin Security Key</label>
+              <small class="text-muted">Default: admin123</small>
+            </div>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
+              <input type="password" class="form-control" id="password" name="password" value="admin123" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-dark w-100 py-2 fw-semibold mb-3" style="background: #0f2b5c; border-color: #0f2b5c;">
+            <i class="fa-solid fa-key me-2 text-warning"></i> Authorize & Enter Console
+          </button>
+
+          <div class="text-center">
+            <a href="{{ url_for('auth.login') }}" class="small text-decoration-none text-muted">
+              <i class="fa-solid fa-arrow-left me-1"></i> Return to Customer Banking
+            </a>
+          </div>
+        </form>
+      </div>
+
+      <div class="card-footer bg-light text-center py-3 border-top-0">
+        <small class="text-muted"><i class="fa-solid fa-fingerprint me-1"></i> Apex Core Audit Engine v2.6</small>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

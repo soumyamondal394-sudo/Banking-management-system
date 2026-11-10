@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In | Apex Global Bank{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+  <!-- LEFT HERO PRESENTATION -->
+  <div class="auth-hero-side">
+    <div>
+      <div class="d-flex align-items-center mb-4">
+        <div class="brand-icon-box" style="width: 50px; height: 50px; font-size: 1.5rem;">
+          <i class="fa-solid fa-building-columns"></i>
+        </div>
+        <div>
+          <h2 class="m-0 text-white fw-bold tracking-tight">APEX GLOBAL BANK</h2>
+          <span class="text-info small fw-semibold tracking-wider text-uppercase">Institutional & Retail Banking</span>
+        </div>
+      </div>
+
+      <div class="my-5">
+        <h1 class="display-6 fw-bold mb-3 text-white">Smart, Secure, & Modern Banking.</h1>
+        <p class="text-white-50 fs-5 mb-4">
+          Experience frictionless fund transfers, real-time analytics, instant deposit verification, and institutional-grade security.
+        </p>
+
+        <div class="d-flex flex-column gap-3 mt-4">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-primary bg-opacity-25 p-2 text-info">
+              <i class="fa-solid fa-shield-check fs-5"></i>
+            </div>
+            <div>
+              <div class="fw-semibold text-white">Bank-Grade 256-Bit Cryptographic Security</div>
+              <small class="text-white-50">Safeguarded transactions and hashed credential authentication.</small>
+            </div>
+          </div>
+
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-primary bg-opacity-25 p-2 text-info">
+              <i class="fa-solid fa-bolt-lightning fs-5"></i>
+            </div>
+            <div>
+              <div class="fw-semibold text-white">Instant Inter-Account Fund Settlements</div>
+              <small class="text-white-50">Transfer money to verified recipients in milliseconds.</small>
+            </div>
+          </div>
+
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-primary bg-opacity-25 p-2 text-info">
+              <i class="fa-solid fa-chart-line fs-5"></i>
+            </div>
+            <div>
+              <div class="fw-semibold text-white">Real-Time Cashflow & PDF Statements</div>
+              <small class="text-white-50">Interactive visual charts and exportable bank statements.</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pt-4 border-top border-white border-opacity-10 d-flex justify-content-between align-items-center text-white-50 small">
+      <div>Member FDIC | Equal Housing Lender</div>
+      <div>24/7 Support: 1-800-555-APEX</div>
+    </div>
+  </div>
+
+  <!-- RIGHT SIGN-IN FORM -->
+  <div class="auth-form-side">
+    <div class="auth-box">
+      <div class="text-center mb-4">
+        <div class="d-inline-flex align-items-center justify-content-center p-3 rounded-circle bg-primary bg-opacity-10 text-primary mb-3">
+          <i class="fa-solid fa-lock fs-3"></i>
+        </div>
+        <h3 class="fw-bold text-dark">Welcome Back</h3>
+        <p class="text-muted small">Sign in to your online banking portal</p>
+      </div>
+
+      <!-- Quick Fill Credentials Helper -->
+      <div class="p-3 mb-4 rounded-3 bg-light border">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="badge bg-secondary-subtle text-secondary fw-semibold">Quick Demo Test Accounts</span>
+          <small class="text-muted">Click to auto-fill</small>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-sm btn-outline-primary flex-fill" onclick="fillCustomerDemo()">
+            <i class="fa-solid fa-user me-1"></i> Customer
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-dark flex-fill" onclick="fillAdminDemo()">
+            <i class="fa-solid fa-shield-halved me-1"></i> Admin
+          </button>
+        </div>
+      </div>
+
+      <form method="POST" action="{{ url_for('auth.login') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3">
+          <label class="form-label" for="login_identifier">Username or Email</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fa-regular fa-user"></i></span>
+            <input type="text" class="form-control" id="login_identifier" name="login_identifier" placeholder="john_doe or john@example.com" required autofocus>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <label class="form-label" for="password">Password</label>
+            <span class="text-muted small">Default: password123</span>
+          </div>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fa-solid fa-key"></i></span>
+            <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required>
+            <button class="btn btn-outline-secondary" type="button" id="togglePasswordBtn" onclick="togglePasswordVisibility()">
+              <i class="fa-regular fa-eye" id="eyeIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="remember" name="remember">
+            <label class="form-check-label small text-muted" for="remember">Keep me signed in</label>
+          </div>
+          <a href="{{ url_for('auth.admin_login') }}" class="small fw-semibold text-decoration-none">
+            Admin Portal <i class="fa-solid fa-arrow-right ms-1"></i>
+          </a>
+        </div>
+
+        <button type="submit" class="btn btn-bank-primary w-100 py-2 mb-3">
+          <i class="fa-solid fa-arrow-right-to-bracket me-2"></i> Sign In to Portal
+        </button>
+
+        <div class="text-center">
+          <span class="text-muted small">Don't have a bank account?</span>
+          <a href="{{ url_for('auth.register') }}" class="small fw-bold ms-1 text-primary text-decoration-none">Open an Account</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function fillCustomerDemo() {
+  document.getElementById('login_identifier').value = 'john_doe';
+  document.getElementById('password').value = 'password123';
+}
+
+function fillAdminDemo() {
+  document.getElementById('login_identifier').value = 'admin';
+  document.getElementById('password').value = 'admin123';
+}
+
+function togglePasswordVisibility() {
+  const pwdInput = document.getElementById('password');
+  const eyeIcon = document.getElementById('eyeIcon');
+  if (pwdInput.type === 'password') {
+    pwdInput.type = 'text';
+    eyeIcon.classList.remove('fa-eye');
+    eyeIcon.classList.add('fa-eye-slash');
+  } else {
+    pwdInput.type = 'password';
+    eyeIcon.classList.remove('fa-eye-slash');
+    eyeIcon.classList.add('fa-eye');
+  }
+}
+</script>
+{% endblock %}
+

@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Withdraw Funds | Apex Global Bank{% endblock %}
+{% block page_title %}Withdraw Funds{% endblock %}
+{% block page_subtitle %}Debit funds from your account with real-time balance safeguards{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8 col-xl-7">
+    <div class="bank-card">
+      <div class="bank-card-header">
+        <h3 class="bank-card-title">
+          <i class="fa-solid fa-circle-up text-warning"></i> Cash / Account Withdrawal
+        </h3>
+        <span class="badge bg-warning-subtle text-warning border border-warning-subtle">
+          Real-Time Verification
+        </span>
+      </div>
+
+      <div class="bank-card-body p-4">
+        <form method="POST" action="{{ url_for('customer.withdraw') }}" id="withdrawForm">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <!-- Select Source Account -->
+          <div class="mb-4">
+            <label class="form-label" for="account_id">Select Debit Account <span class="text-danger">*</span></label>
+            <select class="form-select form-select-lg" id="account_id" name="account_id" required>
+              {% for acc in accounts %}
+                <option value="{{ acc.id }}" data-balance="{{ acc.balance }}">
+                  {{ acc.account_type }} Account - #{{ acc.formatted_account_number }} (Available: ${{ "{:,.2f}".format(acc.balance) }})
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Quick Preset Amounts -->
+          <div class="mb-3">
+            <label class="form-label d-block text-muted small">Quick Withdrawal Presets</label>
+            <div class="d-flex flex-wrap gap-2">
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setWithdrawAmount(40)">$40</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setWithdrawAmount(100)">$100</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setWithdrawAmount(200)">$200</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setWithdrawAmount(500)">$500</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setWithdrawAmount(1000)">$1,000</button>
+            </div>
+          </div>
+
+          <!-- Withdrawal Amount Input -->
+          <div class="mb-4">
+            <label class="form-label" for="amount">Withdrawal Amount ($) <span class="text-danger">*</span></label>
+            <div class="input-group input-group-lg">
+              <span class="input-group-text bg-light fw-bold text-danger">$</span>
+              <input type="number" step="0.01" min="1.00" max="50000.00" class="form-control fw-bold fs-4 text-dark" id="amount" name="amount" placeholder="0.00" required>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-1">
+              <small class="text-muted">Daily Limit: $50,000.00</small>
+              <small class="fw-semibold" id="remainingBalancePreview"></small>
+            </div>
+          </div>
+
+          <!-- Description / Memo -->
+          <div class="mb-4">
+            <label class="form-label" for="description">Reason / Memo (Optional)</label>
+            <input type="text" class="form-control" id="description" name="description" placeholder="e.g. ATM Cash Withdrawal, Personal expense">
+          </div>
+
+          <!-- Safety notice -->
+          <div class="alert alert-warning py-3 small mb-4 d-flex align-items-center gap-2">
+            <i class="fa-solid fa-triangle-exclamation fs-5 text-warning"></i>
+            <div>
+              Overdraft protection active. Withdrawals exceeding your verified available balance are automatically blocked by the system.
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-bank-primary w-100 py-3 fw-bold fs-5" id="withdrawSubmitBtn">
+            <i class="fa-solid fa-money-bill-transfer me-2"></i> Confirm & Process Withdrawal
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function setWithdrawAmount(amt) {
+  document.getElementById('amount').value = amt.toFixed(2);
+  updateWithdrawPreview();
+}
+
+const amountInput = document.getElementById('amount');
+const accountSelect = document.getElementById('account_id');
+const previewEl = document.getElementById('remainingBalancePreview');
+const submitBtn = document.getElementById('withdrawSubmitBtn');
+
+function updateWithdrawPreview() {
+  const selectedOption = accountSelect.options[accountSelect.selectedIndex];
+  if (!selectedOption) return;
+  const currentBalance = parseFloat(selectedOption.getAttribute('data-balance') || 0);
+  const withAmt = parseFloat(amountInput.value || 0);
+
+  if (!isNaN(withAmt) && withAmt > 0) {
+    const remaining = currentBalance - withAmt;
+    if (remaining < 0) {
+      previewEl.className = 'text-danger fw-bold';
+      previewEl.textContent = `Insufficient funds! Deficit: $${Math.abs(remaining).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      submitBtn.disabled = true;
+    } else {
+      previewEl.className = 'text-success fw-semibold';
+      previewEl.textContent = `Balance after withdrawal: $${remaining.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      submitBtn.disabled = false;
+    }
+  } else {
+    previewEl.textContent = '';
+    submitBtn.disabled = false;
+  }
+}
+
+amountInput.addEventListener('input', updateWithdrawPreview);
+accountSelect.addEventListener('change', updateWithdrawPreview);
+</script>
+{% endblock %}
+

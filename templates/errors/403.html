@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Access Denied (403) | Apex Global Bank{% endblock %}
+{% block page_title %}Access Denied{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+  <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-danger bg-opacity-10 text-danger p-4 mb-3" style="width: 100px; height: 100px;">
+    <i class="fa-solid fa-ban fs-1"></i>
+  </div>
+  <h2 class="fw-bold text-dark mb-2">403 - Forbidden Access</h2>
+  <p class="text-muted max-w-md mx-auto mb-4" style="max-width: 480px;">
+    {{ error_msg or 'You do not have the required administrative or clearance permissions to view this resource.' }}
+  </p>
+  <a href="{{ url_for('customer.dashboard') }}" class="btn btn-bank-primary">
+    <i class="fa-solid fa-house me-1"></i> Return to Dashboard
+  </a>
+</div>
+{% endblock %}
+

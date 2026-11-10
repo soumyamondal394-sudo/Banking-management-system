@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Dashboard{% endblock %}
+{% block page_title %}Account Dashboard{% endblock %}
+{% block page_subtitle %}Welcome back, {{ user.full_name }}{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <!-- WELCOME BANNER -->
+  <div class="col-12">
+    <div class="card border-0 rounded-4 shadow-sm p-4 text-white" style="background: linear-gradient(135deg, #091730 0%, #0f2b5c 60%, #1e40af 100%);">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill">
+              <i class="fa-solid fa-circle-check me-1"></i> Account Verified & Active
+            </span>
+            <span class="text-white-50 small">Customer ID: #{{ user.id + 1000 }}</span>
+          </div>
+          <h2 class="fw-bold mb-1">Welcome back, {{ user.full_name }}!</h2>
+          <p class="text-white-50 mb-0 small">
+            Apex Core Banking Portal. Manage deposits, instant transfers, and download statements effortlessly.
+          </p>
+        </div>
+
+        <div class="d-flex gap-2">
+          <a href="{{ url_for('customer.deposit') }}" class="btn btn-light text-primary fw-semibold px-3 py-2 shadow-sm">
+            <i class="fa-solid fa-plus-circle me-1"></i> Quick Deposit
+          </a>
+          <a href="{{ url_for('customer.transfer') }}" class="btn btn-primary fw-semibold px-3 py-2 border-0 shadow-sm" style="background: var(--blue-accent);">
+            <i class="fa-solid fa-paper-plane me-1"></i> Send Money
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS CARDS -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon-wrapper icon-blue">
+        <i class="fa-solid fa-wallet"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Total Balance</div>
+        <div class="stat-value text-primary">${{ "{:,.2f}".format(total_balance) }}</div>
+        <div class="stat-sub text-success"><i class="fa-solid fa-shield me-1"></i> Across {{ accounts|length }} account(s)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon-wrapper icon-green">
+        <i class="fa-solid fa-arrow-down-long"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Total Deposits</div>
+        <div class="stat-value text-success">${{ "{:,.2f}".format(total_deposits) }}</div>
+        <div class="stat-sub text-muted">All-time inflows</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon-wrapper icon-orange">
+        <i class="fa-solid fa-arrow-up-long"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Total Withdrawals</div>
+        <div class="stat-value text-danger">${{ "{:,.2f}".format(total_withdrawals) }}</div>
+        <div class="stat-sub text-muted">Transfers & withdrawals</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon-wrapper icon-navy">
+        <i class="fa-solid fa-building-columns"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Bank Accounts</div>
+        <div class="stat-value text-dark">{{ accounts|length }}</div>
+        <div class="stat-sub text-info"><a href="{{ url_for('customer.accounts') }}" class="text-decoration-none">Manage Accounts &rarr;</a></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIRTUAL CARD & QUICK ACTIONS -->
+  <div class="col-lg-5">
+    <div class="bank-card h-100">
+      <div class="bank-card-header">
+        <h3 class="bank-card-title">
+          <i class="fa-regular fa-credit-card text-primary"></i> Primary Bank Card
+        </h3>
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+          {{ primary_account.account_type if primary_account else 'Savings' }}
+        </span>
+      </div>
+      <div class="bank-card-body d-flex flex-column justify-content-between">
+        {% if primary_account %}
+        <!-- Digital Card Preview -->
+        <div class="virtual-card">
+          <div class="card-top">
+            <div class="card-bank-name">
+              <i class="fa-solid fa-building-columns me-1"></i> APEX GLOBAL
+            </div>
+            <div class="card-type-badge">{{ primary_account.account_type|upper }}</div>
+          </div>
+
+          <div class="card-middle">
+            <div class="chip-contactless">
+              <div class="card-chip"></div>
+              <i class="fa-solid fa-wifi contactless-icon"></i>
+            </div>
+            <div class="card-number-display d-flex align-items-center justify-content-between">
+              <span>{{ primary_account.formatted_account_number }}</span>
+              <button class="btn btn-sm btn-link text-white p-0" title="Copy Account Number" onclick="copyToClipboard('{{ primary_account.account_number }}', this)">
+                <i class="fa-regular fa-copy fs-6"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="card-bottom">
+            <div class="card-holder-group">
+              <span class="card-label-small">Account Holder</span>
+              <span class="card-holder-name">{{ user.full_name }}</span>
+            </div>
+            <div class="card-balance-display">
+              <span class="card-label-small">Available Funds</span>
+              <div class="card-balance-amt">${{ "{:,.2f}".format(primary_account.balance) }}</div>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <div class="text-center py-5 text-muted">
+          <p>No active accounts found. Please open an account.</p>
+        </div>
+        {% endif %}
+
+        <!-- Quick Action Buttons -->
+        <div>
+          <div class="row g-2">
+            <div class="col-3">
+              <a href="{{ url_for('customer.deposit') }}" class="quick-action-btn">
+                <i class="fa-solid fa-circle-arrow-down text-success"></i>
+                <span>Deposit</span>
+              </a>
+            </div>
+            <div class="col-3">
+              <a href="{{ url_for('customer.withdraw') }}" class="quick-action-btn">
+                <i class="fa-solid fa-circle-arrow-up text-warning"></i>
+                <span>Withdraw</span>
+              </a>
+            </div>
+            <div class="col-3">
+              <a href="{{ url_for('customer.transfer') }}" class="quick-action-btn">
+                <i class="fa-solid fa-arrow-right-arrow-left text-info"></i>
+                <span>Transfer</span>
+              </a>
+            </div>
+            <div class="col-3">
+              <a href="{{ url_for('customer.statement') }}" class="quick-action-btn">
+                <i class="fa-solid fa-file-invoice text-primary"></i>
+                <span>Statement</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- TRANSACTION CASHFLOW CHART -->
+  <div class="col-lg-7">
+    <div class="bank-card h-100">
+      <div class="bank-card-header">
+        <h3 class="bank-card-title">
+          <i class="fa-solid fa-chart-area text-primary"></i> Financial Cashflow Trends
+        </h3>
+        <span class="text-muted small">Past 6 Months Analysis</span>
+      </div>
+      <div class="bank-card-body">
+        <div style="height: 280px; position: relative;">
+          <canvas id="transactionChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECENT TRANSACTIONS TABLE -->
+  <div class="col-12">
+    <div class="bank-card">
+      <div class="bank-card-header">
+        <h3 class="bank-card-title">
+          <i class="fa-solid fa-clock-rotate-left text-primary"></i> Recent Transactions
+        </h3>
+        <a href="{{ url_for('customer.transactions') }}" class="btn btn-sm btn-outline-primary fw-semibold">
+          View Complete Ledger <i class="fa-solid fa-arrow-right ms-1"></i>
+        </a>
+      </div>
+      <div class="bank-card-body p-0">
+        <div class="bank-table-responsive">
+          <table class="bank-table">
+            <thead>
+              <tr>
+                <th>Date & Time</th>
+                <th>Reference ID</th>
+                <th>Description</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Balance After</th>
+                <th>Status</th>
+                <th class="text-center">Receipt</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if recent_transactions %}
+                {% for txn in recent_transactions %}
+                <tr>
+                  <td class="text-muted small">
+                    {{ txn.timestamp.strftime('%b %d, %Y %H:%M') }}
+                  </td>
+                  <td>
+                    <span class="font-monospace fw-semibold small text-primary">{{ txn.reference_id }}</span>
+                  </td>
+                  <td>
+                    <div class="fw-semibold">{{ txn.description or 'Banking Transaction' }}</div>
+                    {% if txn.receiver_account_number %}
+                    <small class="text-muted">Target: #{{ txn.receiver_account_number }}</small>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <span class="badge-pill badge-{{ txn.badge_color }}-soft">
+                      {% if txn.transaction_type == 'DEPOSIT' %}
+                        <i class="fa-solid fa-arrow-down text-success"></i> Deposit
+                      {% elif txn.transaction_type == 'WITHDRAWAL' %}
+                        <i class="fa-solid fa-arrow-up text-warning"></i> Withdrawal
+                      {% elif txn.transaction_type == 'TRANSFER_SENT' %}
+                        <i class="fa-solid fa-paper-plane text-danger"></i> Transfer Sent
+                      {% elif txn.transaction_type == 'TRANSFER_RECEIVED' %}
+                        <i class="fa-solid fa-envelope-open-dollar text-info"></i> Transfer In
+                      {% endif %}
+                    </span>
+                  </td>
+                  <td>
+                    {% if txn.is_credit %}
+                      <span class="fw-bold text-success">+${{ "{:,.2f}".format(txn.amount) }}</span>
+                    {% else %}
+                      <span class="fw-bold text-danger">-${{ "{:,.2f}".format(txn.amount) }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="fw-semibold text-dark">
+                    ${{ "{:,.2f}".format(txn.balance_after) }}
+                  </td>
+                  <td>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
+                      {{ txn.status }}
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    <a href="{{ url_for('customer.receipt', txn_id=txn.id) }}" class="btn btn-sm btn-light border py-1 px-2" title="View Official Receipt">
+                      <i class="fa-solid fa-receipt text-primary"></i>
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="8" class="text-center py-4 text-muted">
+                    No transactions recorded yet. <a href="{{ url_for('customer.deposit') }}">Make your first deposit</a>.
+                  </td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.chartDataLabels = {{ chart_labels|tojson }};
+  window.chartDataDeposits = {{ chart_deposits|tojson }};
+  window.chartDataWithdrawals = {{ chart_withdrawals|tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
+

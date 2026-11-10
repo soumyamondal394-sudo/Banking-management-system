@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Transaction History | Apex Global Bank{% endblock %}
+{% block page_title %}Transaction Ledger{% endblock %}
+{% block page_subtitle %}Search, filter, and audit all financial transactions across your accounts{% endblock %}
+
+{% block content %}
+<div class="bank-card mb-4">
+  <div class="bank-card-header">
+    <h3 class="bank-card-title">
+      <i class="fa-solid fa-filter text-primary"></i> Filter Transactions
+    </h3>
+    <div>
+      <a href="{{ url_for('customer.statement') }}" class="btn btn-sm btn-outline-primary">
+        <i class="fa-solid fa-file-pdf me-1"></i> Generate PDF Statement
+      </a>
+    </div>
+  </div>
+  <div class="bank-card-body p-3">
+    <form method="GET" action="{{ url_for('customer.transactions') }}" class="row g-2 align-items-end">
+      <!-- Account Filter -->
+      <div class="col-md-3">
+        <label class="form-label small mb-1" for="account_id">Account</label>
+        <select class="form-select form-select-sm" id="account_id" name="account_id">
+          <option value="">All My Accounts</option>
+          {% for acc in accounts %}
+          <option value="{{ acc.id }}" {% if selected_account == acc.id|string %}selected{% endif %}>
+            {{ acc.account_type }} (#{{ acc.formatted_account_number }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Type Filter -->
+      <div class="col-md-2">
+        <label class="form-label small mb-1" for="type">Transaction Type</label>
+        <select class="form-select form-select-sm" id="type" name="type">
+          <option value="">All Types</option>
+          <option value="DEPOSIT" {% if selected_type == 'DEPOSIT' %}selected{% endif %}>Deposits</option>
+          <option value="WITHDRAWAL" {% if selected_type == 'WITHDRAWAL' %}selected{% endif %}>Withdrawals</option>
+          <option value="TRANSFER_SENT" {% if selected_type == 'TRANSFER_SENT' %}selected{% endif %}>Transfers Sent</option>
+          <option value="TRANSFER_RECEIVED" {% if selected_type == 'TRANSFER_RECEIVED' %}selected{% endif %}>Transfers Received</option>
+        </select>
+      </div>
+
+      <!-- Search Keyword -->
+      <div class="col-md-3">
+        <label class="form-label small mb-1" for="q">Search Keyword / Ref ID</label>
+        <input type="text" class="form-control form-control-sm" id="q" name="q" value="{{ search_query }}" placeholder="Ref ID, description, or account">
+      </div>
+
+      <!-- Date Range -->
+      <div class="col-md-2">
+        <label class="form-label small mb-1" for="from_date">From Date</label>
+        <input type="date" class="form-control form-control-sm" id="from_date" name="from_date" value="{{ from_date }}">
+      </div>
+
+      <!-- Actions -->
+      <div class="col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-sm btn-bank-primary flex-fill">
+          <i class="fa-solid fa-magnifying-glass me-1"></i> Filter
+        </button>
+        <a href="{{ url_for('customer.transactions') }}" class="btn btn-sm btn-outline-secondary" title="Reset Filters">
+          <i class="fa-solid fa-rotate-left"></i>
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Transactions Table Card -->
+<div class="bank-card">
+  <div class="bank-card-header">
+    <div class="d-flex align-items-center gap-2">
+      <span class="fw-bold text-dark">Transaction Records</span>
+      <span class="badge bg-secondary-subtle text-secondary rounded-pill">{{ transactions|length }} Records</span>
+    </div>
+  </div>
+  <div class="bank-card-body p-0">
+    <div class="bank-table-responsive">
+      <table class="bank-table">
+        <thead>
+          <tr>
+            <th>Date & Time</th>
+            <th>Reference ID</th>
+            <th>Account</th>
+            <th>Description</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Balance After</th>
+            <th>Status</th>
+            <th class="text-center">Receipt</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if transactions %}
+            {% for txn in transactions %}
+            <tr>
+              <td class="text-muted small">
+                {{ txn.timestamp.strftime('%Y-%m-%d %H:%M') }}
+              </td>
+              <td>
+                <span class="font-monospace fw-semibold small text-primary">{{ txn.reference_id }}</span>
+              </td>
+              <td class="small">
+                #{{ txn.account.formatted_account_number }} ({{ txn.account.account_type }})
+              </td>
+              <td>
+                <div class="fw-semibold">{{ txn.description or 'Banking Operation' }}</div>
+                {% if txn.receiver_account_number %}
+                <small class="text-muted">Target: #{{ txn.receiver_account_number }}</small>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge-pill badge-{{ txn.badge_color }}-soft">
+                  {% if txn.transaction_type == 'DEPOSIT' %}
+                    <i class="fa-solid fa-arrow-down text-success"></i> Deposit
+                  {% elif txn.transaction_type == 'WITHDRAWAL' %}
+                    <i class="fa-solid fa-arrow-up text-warning"></i> Withdrawal
+                  {% elif txn.transaction_type == 'TRANSFER_SENT' %}
+                    <i class="fa-solid fa-paper-plane text-danger"></i> Transfer Sent
+                  {% elif txn.transaction_type == 'TRANSFER_RECEIVED' %}
+                    <i class="fa-solid fa-envelope-open-dollar text-info"></i> Transfer In
+                  {% endif %}
+                </span>
+              </td>
+              <td>
+                {% if txn.is_credit %}
+                  <span class="fw-bold text-success">+${{ "{:,.2f}".format(txn.amount) }}</span>
+                {% else %}
+                  <span class="fw-bold text-danger">-${{ "{:,.2f}".format(txn.amount) }}</span>
+                {% endif %}
+              </td>
+              <td class="fw-semibold text-dark">
+                ${{ "{:,.2f}".format(txn.balance_after) }}
+              </td>
+              <td>
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
+                  {{ txn.status }}
+                </span>
+              </td>
+              <td class="text-center">
+                <a href="{{ url_for('customer.receipt', txn_id=txn.id) }}" class="btn btn-sm btn-light border py-1 px-2" title="View Official Receipt">
+                  <i class="fa-solid fa-receipt text-primary"></i>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="9" class="text-center py-5 text-muted">
+                <i class="fa-regular fa-folder-open fs-2 d-block mb-2 text-secondary"></i>
+                No transaction records match the specified filters.
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}System Error (500) | Apex Global Bank{% endblock %}
+{% block page_title %}Internal System Error{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+  <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-warning bg-opacity-10 text-warning p-4 mb-3" style="width: 100px; height: 100px;">
+    <i class="fa-solid fa-triangle-exclamation fs-1"></i>
+  </div>
+  <h2 class="fw-bold text-dark mb-2">500 - Internal Core System Error</h2>
+  <p class="text-muted max-w-md mx-auto mb-4" style="max-width: 480px;">
+    An unexpected transaction processing exception occurred. All transactions have been rolled back cleanly for data integrity.
+  </p>
+  <a href="{{ url_for('customer.dashboard') }}" class="btn btn-bank-primary">
+    <i class="fa-solid fa-arrow-rotate-left me-1"></i> Refresh Dashboard
+  </a>
+</div>
+{% endblock %}
+

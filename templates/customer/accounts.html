@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}My Bank Accounts | Apex Global Bank{% endblock %}
+{% block page_title %}Bank Accounts{% endblock %}
+{% block page_subtitle %}Manage your active savings and checking accounts{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold text-dark mb-0">Your Accounts Portfolio</h4>
+    <p class="text-muted small mb-0">Total of {{ accounts|length }} bank account(s) registered under your name.</p>
+  </div>
+  <button type="button" class="btn btn-bank-primary" data-bs-toggle="modal" data-bs-target="#newAccountModal">
+    <i class="fa-solid fa-plus me-1"></i> Open New Account
+  </button>
+</div>
+
+<div class="row g-4 mb-4">
+  {% for acc in accounts %}
+  <div class="col-md-6 col-xl-4">
+    <div class="bank-card h-100 position-relative">
+      <div class="bank-card-header">
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge {% if acc.account_type == 'Savings' %}bg-primary-subtle text-primary border border-primary-subtle{% else %}bg-info-subtle text-info border border-info-subtle{% endif %}">
+            {{ acc.account_type }} Account
+          </span>
+          <span class="badge {% if acc.status == 'Active' %}bg-success-subtle text-success border border-success-subtle{% else %}bg-danger-subtle text-danger border border-danger-subtle{% endif %}">
+            {{ acc.status }}
+          </span>
+        </div>
+        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Copy Account Number" onclick="copyToClipboard('{{ acc.account_number }}', this)">
+          <i class="fa-regular fa-copy"></i>
+        </button>
+      </div>
+
+      <div class="bank-card-body">
+        <div class="text-muted small mb-1">Account Number</div>
+        <div class="fs-5 font-monospace fw-bold text-dark mb-3">{{ acc.formatted_account_number }}</div>
+
+        <div class="p-3 rounded-3 bg-light border mb-3">
+          <div class="text-muted small">Current Available Balance</div>
+          <div class="fs-3 fw-bold text-primary">${{ "{:,.2f}".format(acc.balance) }}</div>
+        </div>
+
+        <div class="row text-center border-top pt-3 g-2">
+          <div class="col-6 border-end">
+            <small class="text-muted d-block">Inflow</small>
+            <span class="fw-bold text-success small">+${{ "{:,.2f}".format(acc.total_deposits) }}</span>
+          </div>
+          <div class="col-6">
+            <small class="text-muted d-block">Outflow</small>
+            <span class="fw-bold text-danger small">-${{ "{:,.2f}".format(acc.total_withdrawals) }}</span>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-4">
+          <a href="{{ url_for('customer.statement', account_id=acc.id) }}" class="btn btn-sm btn-outline-primary flex-fill">
+            <i class="fa-solid fa-file-lines me-1"></i> Statement
+          </a>
+          <a href="{{ url_for('customer.transfer') }}" class="btn btn-sm btn-bank-primary flex-fill">
+            <i class="fa-solid fa-paper-plane me-1"></i> Transfer
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Modal: Open New Account -->
+<div class="modal fade" id="newAccountModal" tabindex="-1" aria-labelledby="newAccountModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header text-white" style="background: linear-gradient(135deg, var(--navy-darkest) 0%, var(--navy-dark) 100%);">
+        <h5 class="modal-title fw-bold" id="newAccountModalLabel">
+          <i class="fa-solid fa-vault me-2 text-warning"></i> Open a New Bank Account
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form method="POST" action="{{ url_for('customer.accounts') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body p-4">
+          <p class="text-muted small mb-4">
+            Create an additional high-yield savings or daily checking account. Your account number will be instantly generated.
+          </p>
+
+          <div class="mb-3">
+            <label class="form-label" for="account_type">Account Type</label>
+            <select class="form-select" id="account_type" name="account_type" required>
+              <option value="Savings">High-Yield Savings (Interest Bearing)</option>
+              <option value="Current">Current / Checking Account (Business & Personal)</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" for="initial_deposit">Initial Deposit Amount ($)</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input type="number" step="0.01" min="25.00" class="form-control" id="initial_deposit" name="initial_deposit" value="50.00" required>
+            </div>
+            <small class="text-muted">Minimum initial opening deposit is $25.00</small>
+          </div>
+
+          <div class="alert alert-info py-2 small mb-0">
+            <i class="fa-solid fa-circle-info me-1"></i> Instant activation with automatic core ledger registration.
+          </div>
+        </div>
+
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-bank-primary">Confirm & Create Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

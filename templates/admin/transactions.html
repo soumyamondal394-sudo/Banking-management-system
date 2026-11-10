@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Master Transaction Ledger | Admin Center{% endblock %}
+{% block page_title %}Master Audit Ledger{% endblock %}
+{% block page_subtitle %}Real-time global transaction records, audit trails, and compliance surveillance{% endblock %}
+
+{% block content %}
+<div class="bank-card mb-4">
+  <div class="bank-card-header">
+    <h3 class="bank-card-title">
+      <i class="fa-solid fa-list-check text-primary"></i> Filter Audit Ledger
+    </h3>
+    <span class="badge bg-secondary-subtle text-secondary">{{ transactions|length }} Records Retrieved</span>
+  </div>
+  <div class="bank-card-body p-3">
+    <form method="GET" action="{{ url_for('admin.transactions') }}" class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label small mb-1" for="q">Keyword / Reference ID / Account</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></span>
+          <input type="text" class="form-control" id="q" name="q" value="{{ search_query }}" placeholder="Ref ID, Account #, or Customer">
+        </div>
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label small mb-1" for="type">Type</label>
+        <select class="form-select" id="type" name="type">
+          <option value="">All Types</option>
+          <option value="DEPOSIT" {% if txn_type == 'DEPOSIT' %}selected{% endif %}>Deposits</option>
+          <option value="WITHDRAWAL" {% if txn_type == 'WITHDRAWAL' %}selected{% endif %}>Withdrawals</option>
+          <option value="TRANSFER_SENT" {% if txn_type == 'TRANSFER_SENT' %}selected{% endif %}>Transfers Sent</option>
+          <option value="TRANSFER_RECEIVED" {% if txn_type == 'TRANSFER_RECEIVED' %}selected{% endif %}>Transfers Received</option>
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label small mb-1" for="from_date">From Date</label>
+        <input type="date" class="form-control" id="from_date" name="from_date" value="{{ from_date }}">
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label small mb-1" for="to_date">To Date</label>
+        <input type="date" class="form-control" id="to_date" name="to_date" value="{{ to_date }}">
+      </div>
+
+      <div class="col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-bank-primary flex-fill">Surveil</button>
+        <a href="{{ url_for('admin.transactions') }}" class="btn btn-outline-secondary" title="Reset">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="bank-card">
+  <div class="bank-card-body p-0">
+    <div class="bank-table-responsive">
+      <table class="bank-table">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Reference ID</th>
+            <th>Account / Customer</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Balance After</th>
+            <th>Routing Info</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if transactions %}
+            {% for txn in transactions %}
+            <tr>
+              <td class="text-muted small">
+                {{ txn.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+              </td>
+              <td>
+                <span class="font-monospace fw-bold small text-primary">{{ txn.reference_id }}</span>
+              </td>
+              <td>
+                <div class="fw-bold small">{{ txn.account.user.full_name }}</div>
+                <div class="text-muted small font-monospace">#{{ txn.account.formatted_account_number }}</div>
+              </td>
+              <td>
+                <span class="badge-pill badge-{{ txn.badge_color }}-soft">
+                  {{ txn.transaction_type.replace('_', ' ').title() }}
+                </span>
+              </td>
+              <td>
+                {% if txn.is_credit %}
+                  <span class="fw-bold text-success">+${{ "{:,.2f}".format(txn.amount) }}</span>
+                {% else %}
+                  <span class="fw-bold text-danger">-${{ "{:,.2f}".format(txn.amount) }}</span>
+                {% endif %}
+              </td>
+              <td class="fw-semibold text-dark">
+                ${{ "{:,.2f}".format(txn.balance_after) }}
+              </td>
+              <td class="small text-muted">
+                <div>{{ txn.description or '-' }}</div>
+                {% if txn.sender_account_number and txn.receiver_account_number %}
+                <div class="font-monospace text-xs">Route: #{{ txn.sender_account_number }} &rarr; #{{ txn.receiver_account_number }}</div>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
+                  {{ txn.status }}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="8" class="text-center py-5 text-muted">
+                No ledger transactions match the query parameters.
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
